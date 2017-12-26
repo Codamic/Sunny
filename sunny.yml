@@ -1,0 +1,6 @@
+- name: Deploy and configure Messos Master
+  hosts: mesos-masters
+  remote_user: root
+
+  roles:
+    - common
