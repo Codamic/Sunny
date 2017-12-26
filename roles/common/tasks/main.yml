@@ -38,7 +38,6 @@
     state: present
     reload: yes
 
-
 - name: Increase range of ports that can be used
   sysctl:
     name: net.ipv4.ip_local_port_range

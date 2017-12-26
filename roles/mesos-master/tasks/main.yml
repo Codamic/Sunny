@@ -1,0 +1,39 @@
+---
+- name: "Install Mesos deps"
+  apt: name={{item}} state=installed
+  with_items:
+       - wget
+       - tar
+       - git
+       - openjdk-8-jdk
+       - build-essential
+       - python-dev
+       - python-six
+       - python-virtualenv
+       - libcurl4-nss-dev
+       - libsasl2-dev
+       - libsasl2-modules
+       - maven
+       - libapr1-dev
+       - libsvn-dev
+       - zlib1g-dev
+
+- name: "Download the Mesos v{{ mesos.version }} tarball"
+  get_url:
+    url: "http://www.apache.org/dist/mesos/{{ mesos.version }}/mesos-{{ mesos.version }}.tar.gz"
+    dest: /usr/src/mesos.tar.gz
+    mode: 0740
+    checksum: "md5:{{ mesos.checksum }}"
+    force: yes
+
+- name: Remove source directory
+  file:
+    state: absent
+    path: /usr/src/mesos
+
+- name: Extract the Mesos tarball
+  unarchive:
+    src: /usr/src/mesos.tar.gz
+    dest: /usr/src/
+    creates: /usr/src/mesos-{{ mesos.version }}
+    remote_src: true
