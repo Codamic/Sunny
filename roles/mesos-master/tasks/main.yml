@@ -18,6 +18,17 @@
        - libsvn-dev
        - zlib1g-dev
 
+
+- name: Fixing JRE link problem source directory
+  command: cp -r /usr/lib/jvm/java-8-openjdk-armhf/jre/lib/arm/client /usr/lib/jvm/java-8-openjdk-armhf/jre/lib/arm/server
+  args:
+    chdir: /usr/src/mesos-{{ mesos.version }}/
+
+- name: Remove source directory
+  file:
+    state: absent
+    path: /usr/src/mesos-{{ mesos.version }}
+
 - name: "Download the Mesos v{{ mesos.version }} tarball"
   get_url:
     url: "http://www.apache.org/dist/mesos/{{ mesos.version }}/mesos-{{ mesos.version }}.tar.gz"
@@ -26,14 +37,42 @@
     checksum: "md5:{{ mesos.checksum }}"
     force: yes
 
-- name: Remove source directory
-  file:
-    state: absent
-    path: /usr/src/mesos
-
-- name: Extract the Mesos tarball
+- name: "Extract the Mesos tarball"
   unarchive:
     src: /usr/src/mesos.tar.gz
     dest: /usr/src/
+    remote_src: yes
     creates: /usr/src/mesos-{{ mesos.version }}
-    remote_src: true
+
+
+- name: Remove any old builds
+  command: rm -rf /usr/src/mesos-{{ mesos.version }}/build /opt/mesos
+  args:
+    chdir: /usr/src/mesos-{{ mesos.version }}/
+
+- name: Create the Mesos build directory
+  command: mkdir -p /usr/src/mesos-{{ mesos.version }}/build
+  args:
+    chdir: /usr/src/mesos-{{ mesos.version }}
+
+- name: Configure the Mesos build
+  command: ../configure --prefix=/opt/mesos
+  args:
+    chdir: /usr/src/mesos-{{ mesos.version }}/build
+  environment:
+    - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-armhf
+    - PATH: "{{ ansible_env.JAVA_HOME}}/bin:{{ ansible_env.PATH }}"
+
+- name: Build Mesos
+  command: make -j 3
+  args:
+    chdir: /usr/src/mesos-{{ mesos.version }}/build
+  environment:
+    - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-armhf
+
+- name: Install Mesos build
+  command: make install
+  args:
+    chdir: /usr/src/mesos-{{ mesos.version }}/build
+  environment:
+    - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-armhf
