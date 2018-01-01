@@ -22,7 +22,7 @@
 - name: Fixing JRE link problem source directory
   command: cp -r /usr/lib/jvm/java-8-openjdk-armhf/jre/lib/arm/client /usr/lib/jvm/java-8-openjdk-armhf/jre/lib/arm/server
   args:
-    chdir: /usr/src/mesos-{{ mesos.version }}/
+    chdir: /
 
 - name: Remove source directory
   file:
@@ -64,15 +64,20 @@
     - PATH: "{{ ansible_env.JAVA_HOME}}/bin:{{ ansible_env.PATH }}"
 
 - name: Build Mesos
-  command: make -j 3
-  args:
+  make:
     chdir: /usr/src/mesos-{{ mesos.version }}/build
+    params:
+      NUM_THREADS: 4
   environment:
     - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-armhf
+    - PATH: "{{ ansible_env.JAVA_HOME}}/bin:{{ ansible_env.PATH }}"
 
 - name: Install Mesos build
-  command: make install
-  args:
+  make:
     chdir: /usr/src/mesos-{{ mesos.version }}/build
+    target: install
+    params:
+      NUM_THREADS: 4
   environment:
     - JAVA_HOME: /usr/lib/jvm/java-8-openjdk-armhf
+    - PATH: "{{ ansible_env.JAVA_HOME}}/bin:{{ ansible_env.PATH }}"
